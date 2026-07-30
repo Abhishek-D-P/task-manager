@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="static\style.css">
+</head>
+<body>
+    All tasks:
+    <ul></ul>
+    {% for task in tasks %}
+        <li class="task-row">
+           <p> {{ task.1 }} Status: <span>{{ task.2 }}</span> </p>
+           <button onclick="deleteTask()" id="{{ task.1 }}" class="delete-task">Delete Task</button> 
+        </li>
+    {% endfor %}
+
+    <form action="/tasks" method="post">
+        <label for="task">Task:</label>
+        <input type="text" name="task" id="task">
+        <label for="status">Status:</label>
+        <select name="status" id="status">
+            <option value="To Do">To Do</option>
+            <option value="Ready">Ready</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+        </select>
+        <input type="submit" value="Create Task">
+    </form>
+    <a href="/">Back</a><br><br>
+    
+</body>
+</html>

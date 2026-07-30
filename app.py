@@ -1,15 +1,13 @@
-from flask import Flask,request
+from flask import Flask,request, render_template,redirect
 import sqlite3
 from logging import Logger
 import json
-
-logger = Logger('app.log',10)
+import os
+logger = Logger(os.path.join(os.getcwd(),'app.log'),10)
 
 app = Flask(__name__)
 conn = sqlite3.connect('tasks.db',check_same_thread=False)
 cursor = conn.cursor()
-
-
 
 query = ''' 
     CREATE TABLE IF NOT EXISTS tasks(
@@ -24,9 +22,9 @@ cursor.execute(query)
 
 @app.route('/')
 def home():
-    return 'Hello, World!'
+    return render_template('index.html')
 
-@app.route('/tasks',methods = ['GET',"POST"])
+@app.route('/tasks',methods = ['GET',"POST",'DELETE'])
 def tasks():
     if request.method == 'GET':
         query = "Select * from TASKS"
@@ -35,13 +33,13 @@ def tasks():
         except Exception as e:
             logger.error(f"Query failed due to {e}")
             raise
-        query_response = cursor.fetchall()
+        all_tasks = cursor.fetchall()
+        print(all_tasks)
         logger.info("Query successful")
-        return query_response
+        return render_template('task.html',title="Tasks Page", tasks=all_tasks)
     elif request.method == 'POST':
-        data =  request.get_json()
-        task = data.get("task")
-        status = data.get("status")
+        task = request.form.get("task")
+        status = request.form.get("status")
 
         query = f'''
                 INSERT INTO TASKS (task,status) 
@@ -55,10 +53,8 @@ def tasks():
 
         logger.info("Query Successful")
 
-    return {"status":200}
+    return redirect('/tasks')
         
-
-    
 
 
 if __name__ == '__main__':
