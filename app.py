@@ -1,8 +1,11 @@
 from flask import Flask,request, render_template,redirect
 import sqlite3
+import logging
 from logging import Logger
 import json
 import os
+
+logging.basicConfig()
 logger = Logger(os.path.join(os.getcwd(),'app.log'),10)
 
 app = Flask(__name__)
@@ -50,10 +53,27 @@ def tasks():
             conn.commit()
         except Exception as e:
             logger.error(f"Query failed due to {e}")
+        logger.info("Posted Successful")
+    elif request.method == 'DELETE':
+        payload = request.get_json()
+        id = payload.get("id")
+        print(id)
+        query = f'''
+                DELETE FROM TASKS 
+                WHERE id = ?
+                '''
+        try:
+            cursor.execute(query,(id,))
+            conn.commit()
+            logger.info("Delete successful!")
+        except Exception as e:
+            logger.error(f"Delete failed due to {e}")
+            return {"success": False, "message": "Internal server error"}, 500
 
-        logger.info("Query Successful")
+        return {"success":True},200
+    return redirect("/tasks")
 
-    return redirect('/tasks')
+    
         
 
 

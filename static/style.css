@@ -1,4 +1,39 @@
-.task-row{
-    display: flex;
+body{
+    background-color: #efefef;
 }
 
+p{
+    margin: 0;
+}
+
+.task-row{
+    margin: 10px auto;
+    display: flex;
+    height: 2rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 500px;
+    background-color: #fafafa;
+    padding: 5px;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 2px 2px 15px 0px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.delete-task{
+    height: 1.5rem;
+    border: none;
+    background-color: rgb(221, 50, 50);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 15px 0px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.create-task-form{
+
+    margin: 50px auto;
+    width: 500px;
+}
