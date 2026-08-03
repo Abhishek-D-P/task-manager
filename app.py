@@ -64,8 +64,9 @@ def login():
         try:
             cursor.execute(query,(username,))
             user = cursor.fetchone()
-            if user or not check_password_hash(user[2],password):    
-                raise ValueError    
+            if not user or not check_password_hash(user[3],password):    
+                raise ValueError  
+              
         except ValueError:
             logging.error("Wrong username or password")
             return jsonify({
