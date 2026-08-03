@@ -4,6 +4,7 @@ import logging
 import json
 import os
 import sys
+from werkzeug.security import generate_password_hash,check_password_hash
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -17,20 +18,37 @@ app = Flask(__name__)
 conn = sqlite3.connect('tasks.db',check_same_thread=False)
 cursor = conn.cursor()
 
-query = ''' 
-    CREATE TABLE IF NOT EXISTS tasks(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task VARCHAR(50) NOT NULL,
-    status VARCHAR(50)
-    );
-    '''
+with open('query.json') as f:
+    queries = json.load(f)
 
-cursor.execute(query)
+cursor.execute(queries.get("create_users_table"))
+cursor.execute(queries.get("create_tasks_table"))
 
 
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/register',methods = ['GET',"POST"])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html',title="Register")
+    elif request.method == 'POST':
+        username = request.form.get("username")
+        name = request.form.get("name")
+        password = request.form.get("password")
+        password_hash = generate_password_hash(password)
+
+        query = queries.get("create_users")
+        try:
+            cursor.execute(query,(username,name,password_hash))
+            conn.commit()
+        except Exception as e:
+            logging.error(f"Query failed due to {e}")
+            raise
+        logging.info("Posted Successful")
+
+    return redirect("/tasks")
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
