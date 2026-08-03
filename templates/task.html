@@ -24,16 +24,17 @@
     <ul></ul>
     {% for task in tasks %}
         <li class="task-row">
-            <input type="checkbox" name="checkBox-{{task.1}}" id="checkBox-{{task.1}}">
-           <p> {{ task.1 }} </p>
-            <select name="status-{{task.1}}" id="status-{{task.1}}">
+            <input type="checkbox" name="checkBox-{{task.1}}" id="checkBox-{{task.0}}">
+           <p id="task-name-{{task.0}}"> {{ task.1 }} </p>
+            <select name="status-{{task.1}}" id="status-{{task.0}}" class="js-list-status">
                 <option value="To Do" {% if task.2 == "To Do" %} selected {% endif %}>To Do</option>
                 <option value="Ready" {% if task.2 == "Ready" %} selected {% endif %}>Ready</option>
                 <option value="In Progress" {% if task.2 == "In Progress" %} selected {% endif %}>In Progress</option>
                 <option value="Done" {% if task.2 == "Done" %} selected {% endif %}>Done</option>
             </select>
             
-           <button onclick="deleteTask({{ task.0 }})" id="{{ task.1 }}" class="delete-task">Delete Task</button> 
+           <button onclick="updateTask({{ task.0 }})" id="delete-{{ task.0 }}" class="update-task">Update Task</button> 
+           <button onclick="deleteTask({{ task.0 }})" id="udpate-{{ task.0 }}" class="delete-task">Delete Task</button> 
         </li>
     {% endfor %}
 
