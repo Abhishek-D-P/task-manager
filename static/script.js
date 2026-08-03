@@ -25,30 +25,23 @@ rows.forEach(row => {
 
 
 
-
 function deleteTask(id){
-    fetch("tasks",{
+    fetch(`/tasks/${id}`,{
         method:'DELETE',
-        headers:{
-            'Content-Type':'application/json',
-        },
-        body:JSON.stringify({
-            id:id
-        })
-    }).then(res => location.reload());
+    }).then(res => location.reload()).catch(e=>{console.log(e)});
     console.log("in");
 }
+
 
 function updateTask(id){
     let taskName = document.getElementById(`task-name-${id}`).textContent;
     let status = document.getElementById(`status-${id}`).value;
-    fetch("tasks",{
+    fetch(`/tasks/${id}`,{
         method:"PATCH",
         headers:{
             'Content-Type':'application/json',
         },
         body:JSON.stringify({
-            id:id,
             task:taskName,
             status:status
         })

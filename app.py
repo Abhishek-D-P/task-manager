@@ -32,7 +32,7 @@ cursor.execute(query)
 def home():
     return render_template('index.html')
 
-@app.route('/tasks',methods = ['GET',"POST",'PATCH','DELETE'])
+@app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
     if request.method == 'GET':
         query = "Select * from TASKS"
@@ -42,7 +42,7 @@ def tasks():
             logging.error(f"Query failed due to {e}")
             raise
         all_tasks = cursor.fetchall()
-        logging.info("Query successful")
+        logging.info("Get query successful")
         return render_template('task.html',title="Tasks Page", tasks=all_tasks)
     elif request.method == 'POST':
         task = request.form.get("task")
@@ -59,9 +59,13 @@ def tasks():
             logging.error(f"Query failed due to {e}")
         logging.info("Posted Successful")
 
-    elif request.method == 'PATCH':
+    return redirect("/tasks")
+
+@app.route("/tasks/<int:id>",methods = ['PATCH','DELETE'])
+def task_item(id):
+    print("in")
+    if request.method == 'PATCH':
         response = request.get_json()
-        id = response.get("id")
         task = response.get("task")
         status = response.get("status")
         query = '''
@@ -79,8 +83,6 @@ def tasks():
         return {"success":True},200
     
     elif request.method == 'DELETE':
-        payload = request.get_json()
-        id = payload.get("id")
         query = f'''
                 DELETE FROM TASKS 
                 WHERE id = ?
@@ -93,10 +95,6 @@ def tasks():
             logging.error(f"Delete failed due to {e}")
             return {"success": False, "message": "Internal server error"}, 500
         return {"success":True},200
-    
-    return redirect("/tasks")
-
-    
         
 
 
