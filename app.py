@@ -1,4 +1,4 @@
-from flask import Flask,request, render_template,redirect
+from flask import Flask,request, render_template,redirect,jsonify
 import sqlite3
 import logging
 import json
@@ -21,6 +21,7 @@ cursor = conn.cursor()
 with open('query.json') as f:
     queries = json.load(f)
 
+conn.execute("PRAGMA foreign_keys = ON")
 cursor.execute(queries.get("create_users_table"))
 cursor.execute(queries.get("create_tasks_table"))
 
@@ -48,7 +49,37 @@ def register():
             raise
         logging.info("Posted Successful")
 
+    return redirect("/login")
+
+@app.route('/login',methods = ['GET',"POST"])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        query = queries.get("get_user")
+
+        try:
+            cursor.execute(query,(username,))
+            user = cursor.fetchone()
+            if user or not check_password_hash(user[2],password):    
+                raise ValueError    
+        except ValueError:
+            logging.error("Wrong username or password")
+            return jsonify({
+            "status": "error",
+            "message": "Invalid email or password."
+        }), 401 
+
+        except Exception as e:
+            logging.error(f"Query failed due to {e}")
+            raise
+        logging.info("Logged in Successful")
+
     return redirect("/tasks")
+
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
