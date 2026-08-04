@@ -25,6 +25,7 @@ conn.execute("PRAGMA foreign_keys = ON")
 cursor.execute(queries.get("create_users_table"))
 cursor.execute(queries.get("create_tasks_table"))
 
+user_id = 0
 
 @app.route('/')
 def home():
@@ -78,16 +79,18 @@ def login():
             logging.error(f"Query failed due to {e}")
             raise
         logging.info("Logged in Successful")
-
+    global user_id
+    user_id = user[0]
     return redirect("/tasks")
 
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
+    global user_id
     if request.method == 'GET':
-        query = "Select * from TASKS"
+        query = "Select * from TASKS where user_id = ?"
         try:
-            cursor.execute(query)
+            cursor.execute(query,(user_id,))
         except Exception as e:
             logging.error(f"Query failed due to {e}")
             raise
@@ -97,13 +100,12 @@ def tasks():
     elif request.method == 'POST':
         task = request.form.get("task")
         status = request.form.get("status")
-
         query = f'''
-                INSERT INTO TASKS (task,status) 
-                VALUES (?,?)
+                INSERT INTO TASKS (task,status,user_id) 
+                VALUES (?,?,?)
                 '''
         try:
-            cursor.execute(query,(task,status))
+            cursor.execute(query,(task,status,user_id))
             conn.commit()
         except Exception as e:
             logging.error(f"Query failed due to {e}")
