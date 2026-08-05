@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from werkzeug.security import generate_password_hash,check_password_hash
+import secrets
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -25,7 +26,12 @@ conn.execute("PRAGMA foreign_keys = ON")
 cursor.execute(queries.get("create_users_table"))
 cursor.execute(queries.get("create_tasks_table"))
 
-user_id = 0
+sessions = {}
+
+
+def get_current_user_id():
+    session_id = request.cookies.get('session_id')
+    return sessions.get(session_id)
 
 @app.route('/')
 def home():
@@ -67,7 +73,8 @@ def login():
             user = cursor.fetchone()
             if not user or not check_password_hash(user[3],password):    
                 raise ValueError  
-              
+            session_id = secrets.token_hex(32)
+            sessions[session_id] = user[0]
         except ValueError:
             logging.error("Wrong username or password")
             return jsonify({
@@ -79,14 +86,15 @@ def login():
             logging.error(f"Query failed due to {e}")
             raise
         logging.info("Logged in Successful")
-    global user_id
-    user_id = user[0]
-    return redirect("/tasks")
+
+    response = redirect("/tasks")
+    response.set_cookie("session_id",session_id,httponly=True)
+    return response
 
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
-    global user_id
+    user_id = get_current_user_id()
     if request.method == 'GET':
         query = "Select * from TASKS where user_id = ?"
         try:
