@@ -96,7 +96,7 @@ def login():
 def tasks():
     user_id = get_current_user_id()
     if request.method == 'GET':
-        query = "Select * from TASKS where user_id = ?"
+        query = queries.get("get_tasks")
         try:
             cursor.execute(query,(user_id,))
         except Exception as e:
@@ -108,10 +108,7 @@ def tasks():
     elif request.method == 'POST':
         task = request.form.get("task")
         status = request.form.get("status")
-        query = f'''
-                INSERT INTO TASKS (task,status,user_id) 
-                VALUES (?,?,?)
-                '''
+        query = queries.get("create_task")
         try:
             cursor.execute(query,(task,status,user_id))
             conn.commit()
@@ -128,11 +125,7 @@ def task_item(id):
         response = request.get_json()
         task = response.get("task")
         status = response.get("status")
-        query = '''
-        UPDATE TASKS 
-        SET task = ?, status = ?
-        where id = ?
-        '''
+        query = queries.get("update_task")
         try:
             cursor.execute(query,(task,status,id))
             conn.commit()
@@ -143,10 +136,7 @@ def task_item(id):
         return {"success":True},200
     
     elif request.method == 'DELETE':
-        query = f'''
-                DELETE FROM TASKS 
-                WHERE id = ?
-                '''
+        query = queries.get("delete_task")
         try:
             cursor.execute(query,(id,))
             conn.commit()
