@@ -120,14 +120,14 @@ def tasks():
 
 @app.route("/tasks/<int:id>",methods = ['PATCH','DELETE'])
 def task_item(id):
-    print("in")
+    user_id = get_current_user_id()
     if request.method == 'PATCH':
         response = request.get_json()
         task = response.get("task")
         status = response.get("status")
         query = queries.get("update_task")
         try:
-            cursor.execute(query,(task,status,id))
+            cursor.execute(query,(task,status,id,user_id))
             conn.commit()
         except Exception as e:
             logging.error(f"Query Failed due to {e}")
@@ -138,7 +138,7 @@ def task_item(id):
     elif request.method == 'DELETE':
         query = queries.get("delete_task")
         try:
-            cursor.execute(query,(id,))
+            cursor.execute(query,(id,user_id))
             conn.commit()
             logging.info("Delete successful!")
         except Exception as e:

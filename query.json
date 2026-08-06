@@ -5,6 +5,6 @@
     "get_user": "SELECT * FROM USERS WHERE USERNAME = ?;",
     "get_tasks": "SELECT * FROM TASKS WHERE user_id = ?;",
     "create_task": "INSERT INTO TASKS (task,status,user_id) VALUES (?,?,?);",
-    "update_task": "UPDATE TASKS SET task = ?, status = ? WHERE id = ?;",
-    "delete_task": "DELETE FROM TASKS WHERE id = ?;"
+    "update_task": "UPDATE TASKS SET task = ?, status = ? WHERE id = ? and user_id = ?;",
+    "delete_task": "DELETE FROM TASKS WHERE id = ? and user_id = ?;"
 }
