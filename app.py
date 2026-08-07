@@ -6,6 +6,7 @@ import os
 import sys
 from werkzeug.security import generate_password_hash,check_password_hash
 import secrets
+import time
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -19,6 +20,8 @@ app = Flask(__name__)
 conn = sqlite3.connect('tasks.db',check_same_thread=False)
 cursor = conn.cursor()
 
+SESSION_DURATION_MINUTES = float(os.environ.get('SESSION_DURATION_MINUTES','1'))
+
 with open('query.json') as f:
     queries = json.load(f)
 
@@ -28,10 +31,17 @@ cursor.execute(queries.get("create_tasks_table"))
 
 sessions = {}
 
-
 def get_current_user_id():
-    session_id = request.cookies.get('session_id')
-    return sessions.get(session_id)
+    session_id = request.cookies.get('session_id',None)
+    if not session_id:
+        return "expired",None
+    session = sessions.get(session_id)
+    session_expiry = session.get('expires_at')
+    if time.time() >= session_expiry:
+        sessions.pop(session_id)
+        
+    user = session.get('user_id')
+    return 'valid',user
 
 @app.route('/')
 def home():
@@ -74,7 +84,8 @@ def login():
             if not user or not check_password_hash(user[3],password):    
                 raise ValueError  
             session_id = secrets.token_hex(32)
-            sessions[session_id] = user[0]
+            session_expires_at = time.time() + SESSION_DURATION_MINUTES * 60
+            sessions[session_id] = {'user_id':user[0],'expires_at':session_expires_at}
         except ValueError:
             logging.error("Wrong username or password")
             return jsonify({
@@ -91,10 +102,20 @@ def login():
     response.set_cookie("session_id",session_id,httponly=True)
     return response
 
+@app.route('/logout',methods = ['GET'])
+def logout():
+    response = redirect('/')
+    response.delete_cookie('session_id')
+    return response
+        
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
-    user_id = get_current_user_id()
+    session_status , user_id = get_current_user_id()
+    if session_status == 'expired' or user_id is None:
+        response = redirect('/')
+        response.delete_cookie('session_id')
+        return response
     if request.method == 'GET':
         query = queries.get("get_tasks")
         try:
@@ -120,7 +141,9 @@ def tasks():
 
 @app.route("/tasks/<int:id>",methods = ['PATCH','DELETE'])
 def task_item(id):
-    user_id = get_current_user_id()
+    session_status , user_id = get_current_user_id()
+    if session_status == 'expired' or user_id is None:
+        return redirect('/')
     if request.method == 'PATCH':
         response = request.get_json()
         task = response.get("task")
@@ -146,12 +169,7 @@ def task_item(id):
             return {"success": False, "message": "Internal server error"}, 500
         return {"success":True},200
 
-@app.route('/logout',methods = ['GET'])
-def logout():
-    response = redirect('/')
-    response.delete_cookie('session_id')
-    return response
-        
+
 
 
 if __name__ == '__main__':
