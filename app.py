@@ -33,15 +33,17 @@ sessions = {}
 
 def get_current_user_id():
     session_id = request.cookies.get('session_id',None)
-    if not session_id:
-        return "expired",None
-    session = sessions.get(session_id)
-    session_expiry = session.get('expires_at')
-    if time.time() >= session_expiry:
-        sessions.pop(session_id)
-        
-    user = session.get('user_id')
-    return 'valid',user
+    if session_id:
+        session = sessions.get(session_id)
+        if session:
+            session_expiry = session.get('expires_at')
+            if time.time() <= session_expiry:
+                user = session.get('user_id')
+                return 'valid',user        
+            else:
+                sessions.pop(session_id)
+    return "expired",None
+            
 
 @app.route('/')
 def home():
@@ -104,6 +106,8 @@ def login():
 
 @app.route('/logout',methods = ['GET'])
 def logout():
+    session_id = request.cookies.get('session_id')
+    sessions.pop(session_id)
     response = redirect('/')
     response.delete_cookie('session_id')
     return response
