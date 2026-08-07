@@ -1,7 +1,7 @@
 {
-    "create_users_table": "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username VARCHAR(50) UNIQUE NOT NULL,name VARCHAR(50) NOT NULL,password VARCHAR(50) NOT NULL);",
+    "create_users_table": "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username VARCHAR(50) UNIQUE NOT NULL,name VARCHAR(50) NOT NULL,password_hash VARCHAR(255) NOT NULL);",
     "create_tasks_table": "CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,task VARCHAR(50) NOT NULL,status VARCHAR(50),user_id INTEGER,FOREIGN KEY (user_id) REFERENCES users(id));",
-    "create_users": "INSERT INTO USERS (username,name,password) VALUES (?,?,?);",
+    "create_users": "INSERT INTO USERS (username,name,password_hash) VALUES (?,?,?);",
     "get_user": "SELECT * FROM USERS WHERE USERNAME = ?;",
     "get_tasks": "SELECT * FROM TASKS WHERE user_id = ?;",
     "create_task": "INSERT INTO TASKS (task,status,user_id) VALUES (?,?,?);",
