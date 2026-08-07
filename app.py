@@ -145,6 +145,12 @@ def task_item(id):
             logging.error(f"Delete failed due to {e}")
             return {"success": False, "message": "Internal server error"}, 500
         return {"success":True},200
+
+@app.route('/logout',methods = ['GET'])
+def logout():
+    response = redirect('/')
+    response.delete_cookie('session_id')
+    return response
         
 
 
