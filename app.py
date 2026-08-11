@@ -41,7 +41,12 @@ def get_current_user_id():
                 user = session.get('user_id')
                 return 'valid',user        
             else:
+                logging.warning("Session expired. Removing session.")
                 sessions.pop(session_id)
+        else:
+            logging.warning("Session ID not found in sessions dictionary.")
+    else:
+        logging.warning("No session ID found in cookies.")
     return "expired",None
             
 
@@ -177,4 +182,4 @@ def task_item(id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host="0.0.0.0",port=5000)
