@@ -7,6 +7,8 @@ import sys
 from werkzeug.security import generate_password_hash,check_password_hash
 import secrets
 import time
+from dotenv import load_dotenv
+load_dotenv()
 
 logging.basicConfig(
     level=logging.DEBUG,
