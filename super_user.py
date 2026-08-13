@@ -19,7 +19,7 @@ name = args.name
 password = args.password
 password_hash = generate_password_hash(password)
 role = 'admin'
-cursor.execute(queries.get('create_users'),(username,name,password_hash,role))
+cursor.execute(queries.get('create_super_users'),(username,name,password_hash,role))
 conn.commit()
 
 print(f"Create super user with username: {username} and password: {password}")
