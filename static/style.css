@@ -1,5 +1,13 @@
+*{
+    --dark-bg-color: #1e1e1e;
+    --dark-text-color: #f5f5f5;
+    --dark-task-row-bg-color: #2e2e2e;
+}
+
+
 body{
-    background-color: #efefef;
+    background-color: var(--dark-bg-color);
+    color: var(--dark-text-color);
 }
 
 p{
@@ -13,11 +21,11 @@ p{
     flex-direction: row;
     flex-wrap: wrap;
     width: 500px;
-    background-color: #fafafa;
+    background-color: var(--dark-task-row-bg-color);
     padding: 5px;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 2px 2px 15px 0px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 2px 2px 0px rgba(227, 224, 224, 0.1);
     border-radius: 10px;
 }
 

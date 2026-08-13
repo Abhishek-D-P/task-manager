@@ -6,14 +6,14 @@ Phase 0 — Foundations
 Phase 1 — Session Authentication
 • Registration ✅
 • Login ✅
-• Logout
+• Logout ✅
 • Cookies ✅
 • Sessions ✅
-• Session Expiry
+• Session Expiry ✅
 
 Phase 2 — Ownership Authorization
 • User owns task ✅
-• Protected Resources
+• Protected Resources ✅ - protects unauthorized access from getting resources (such as tasks)
 
 Phase 3 — RBAC
 • Roles

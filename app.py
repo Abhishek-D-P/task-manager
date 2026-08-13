@@ -94,6 +94,7 @@ def login():
                 raise ValueError  
             session_id = secrets.token_hex(32)
             session_expires_at = time.time() + SESSION_DURATION_MINUTES * 60
+            logging.debug(f"Session created for user_id {user[0]} with session_id {session_id} expiring in {SESSION_DURATION_MINUTES} minutes.")
             sessions[session_id] = {'user_id':user[0],'expires_at':session_expires_at}
         except ValueError:
             logging.error("Wrong username or password")
