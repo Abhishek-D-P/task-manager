@@ -32,6 +32,8 @@ print(f'Deleting old table {table_name} {'.'*50}')
 conn.execute("PRAGMA foreign_keys = OFF")
 delete_table = f'DROP TABLE {table_name};'
 cursor.execute(delete_table)
+conn.execute("PRAGMA foreign_keys = ON")
+
 conn.commit()
 
 print(f'Successfully deleted {table_name}!')
