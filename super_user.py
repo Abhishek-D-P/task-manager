@@ -2,11 +2,13 @@ import argparse
 import json
 from werkzeug.security import generate_password_hash
 import sqlite3
+from pathlib import Path
 
-conn = sqlite3.connect('tasks.db',check_same_thread=False)
+BASE_DIR = Path(__file__).resolve().parent
+conn = sqlite3.connect(BASE_DIR / 'tasks.db', check_same_thread=False)
 cursor = conn.cursor()
 
-with open('query.json','r') as f:
+with open(BASE_DIR / 'query.json', 'r') as f:
     queries = json.load(f)
 parser = argparse.ArgumentParser(description='Create super user')
 parser.add_argument('--username',default='admin')

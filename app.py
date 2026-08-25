@@ -7,6 +7,7 @@ import sys
 from werkzeug.security import generate_password_hash,check_password_hash
 import secrets
 import time
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -19,12 +20,13 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-conn = sqlite3.connect('tasks.db',check_same_thread=False)
+BASE_DIR = Path(__file__).resolve().parent
+conn = sqlite3.connect(BASE_DIR / 'tasks.db', check_same_thread=False)
 cursor = conn.cursor()
 
 SESSION_DURATION_MINUTES = float(os.environ.get('SESSION_DURATION_MINUTES','1'))
 
-with open('query.json') as f:
+with open(BASE_DIR / 'query.json') as f:
     queries = json.load(f)
 
 conn.execute("PRAGMA foreign_keys = ON")

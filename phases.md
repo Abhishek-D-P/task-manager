@@ -16,7 +16,7 @@ Phase 2 — Ownership Authorization
 • Protected Resources ✅ - protects unauthorized access from getting resources (such as tasks)
 
 Phase 3 — RBAC
-• Roles
+• Roles 
 • Permissions
 • Admin/User
 
