@@ -175,9 +175,15 @@ def task_item(id):
         response = request.get_json()
         task = response.get("task")
         status = response.get("status")
-        query = queries.get("update_task")
+        if role == "admin":
+            query = queries.get("update_task_admin")
+        else:
+            query = queries.get("update_task")
         try:
-            cursor.execute(query,(task,status,id,user_id))
+            if role == 'admin':
+                cursor.execute(query,(task,status,id))
+            else:
+                cursor.execute(query,(task,status,id,user_id))
             conn.commit()
         except Exception as e:
             logging.error(f"Query Failed due to {e}")
@@ -186,9 +192,16 @@ def task_item(id):
         return {"success":True},200
     
     elif request.method == 'DELETE':
-        query = queries.get("delete_task")
+        if role == "admin":
+            query = queries.get("delete_task_admin")
+        else:
+            query = queries.get("delete_task")
+        
         try:
-            cursor.execute(query,(id,user_id))
+            if role == 'admin':
+                cursor.execute(query,(id,))
+            else:
+                cursor.execute(query,(id,user_id))
             conn.commit()
             logging.info("Delete successful!")
         except Exception as e:
