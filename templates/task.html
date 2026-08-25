@@ -35,6 +35,9 @@
             
            <button onclick="updateTask({{ task.0 }})" id="update-{{ task.0 }}" class="update-task">Update Task</button> 
            <button onclick="deleteTask({{ task.0 }})" id="delete-{{ task.0 }}" class="delete-task">Delete Task</button> 
+           {% if role == 'admin' %}
+           <p> {{task.3}} </p>
+           {% endif %}
         </li>
     {% endfor %}
 

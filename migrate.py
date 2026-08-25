@@ -1,49 +1,83 @@
 import sqlite3
+from pathlib import Path
 
-conn = sqlite3.connect('tasks.db',check_same_thread=False)
+
+def quote_identifier(identifier):
+    """Quote a SQLite identifier after validating it is a non-empty string."""
+    if not isinstance(identifier, str) or not identifier:
+        raise ValueError('SQLite identifiers must be non-empty strings')
+    return '"' + identifier.replace('"', '""') + '"'
+
+BASE_DIR = Path(__file__).resolve().parent
+conn = sqlite3.connect(BASE_DIR / 'tasks.db', check_same_thread=False)
 cursor = conn.cursor()
 
 # migrate the changes in db 
 
-# define changes
-table_name = 'users'
-new_table_name = table_name + '_new'
+def migrate_table(table_name, column_name=None, column_attributes=None):
+    """Recreate a table while deriving its existing columns automatically.
 
-# create new table
-print(f'Creating new table {new_table_name} {'.'*50}')
-new_schema = f'CREATE TABLE IF NOT EXISTS {new_table_name}(id INTEGER PRIMARY KEY AUTOINCREMENT,username VARCHAR(50) UNIQUE NOT NULL,name VARCHAR(50) NOT NULL,password_hash VARCHAR(255) NOT NULL,role VARCHAR(50));'
+    ``column_name`` and ``column_attributes`` can be used to add a column to
+    the copied schema, for example ``('role', "VARCHAR(20) NOT NULL DEFAULT
+    'user'")``.
+    """
+    table = quote_identifier(table_name)
+    new_table = quote_identifier(f'{table_name}_new')
 
-cursor.execute(new_schema)
-conn.commit()
-print(f'New table {new_table_name} Created!')
+    columns = cursor.execute(f'PRAGMA table_info({table})').fetchall()
+    if not columns:
+        raise ValueError(f'Table {table_name!r} does not exist or has no columns')
 
-# copy the old table to new
-print(f'copying data from {table_name} to new table {new_table_name} {'.'*50}')
-copy_table = f'ALTER TABLE {new_table_name} VALUES(SELECT * FROM {table_name})'
-cursor.execute(new_schema)
-conn.commit()
-print(f'Copying successful!')
+    definitions = []
+    column_names = []
+    for _, name, data_type, not_null, default_value, primary_key in columns:
+        definition = f'{quote_identifier(name)} {data_type or ""}'.strip()
+        if primary_key:
+            definition += ' PRIMARY KEY'
+        if not_null:
+            definition += ' NOT NULL'
+        if default_value is not None:
+            definition += f' DEFAULT {default_value}'
+        definitions.append(definition)
+        column_names.append(quote_identifier(name))
 
+    if column_name is not None:
+        if column_name in {column[1] for column in columns}:
+            raise ValueError(f'Column {column_name!r} already exists')
+        if not column_attributes:
+            raise ValueError('column_attributes is required for a new column')
+        definitions.append(f'{quote_identifier(column_name)} {column_attributes}')
 
+    try:
+        print(f'Creating new table {table_name}_new {"." * 50}')
+        conn.execute('PRAGMA foreign_keys = OFF')
+        cursor.execute(f'CREATE TABLE {new_table} ({", ".join(definitions)})')
+        print(f'New table {table_name}_new Created!')
 
-# delete old table
-print(f'Deleting old table {table_name} {'.'*50}')
+        print(f'Copying data from {table_name} to new table {table_name}_new {"." * 50}')
+        target_columns = ', '.join(column_names)
+        cursor.execute(
+            f'INSERT INTO {new_table} ({target_columns}) '
+            f'SELECT {target_columns} FROM {table}'
+        )
+        print('Copying successful!')
 
-conn.execute("PRAGMA foreign_keys = OFF")
-delete_table = f'DROP TABLE {table_name};'
-cursor.execute(delete_table)
-conn.execute("PRAGMA foreign_keys = ON")
+        print(f'Deleting old table {table_name} {"." * 50}')
+        cursor.execute(f'DROP TABLE {table}')
+        print(f'Successfully deleted {table_name}!')
 
-conn.commit()
+        print(f'Renaming table {table_name}_new to {table_name} {"." * 50}')
+        cursor.execute(f'ALTER TABLE {new_table} RENAME TO {table}')
+        conn.commit()
+        print('Renamed!')
+        print('Migration successful!')
+    except Exception:
+        conn.rollback()
+        cursor.execute(f'DROP TABLE IF EXISTS {new_table}')
+        conn.commit()
+        raise
+    finally:
+        conn.execute('PRAGMA foreign_keys = ON')
 
-print(f'Successfully deleted {table_name}!')
-
-
-# rename table
-print(f'Renaming table {new_table_name}  to {table_name}{'.'*50}')
-
-rename_table = f'ALTER TABLE {new_table_name} RENAME TO {table_name};'
-cursor.execute(rename_table)
-conn.commit()
-print(f'Renamed!')
-print("Migration successful!")
+migrate_table('tasks')
+migrate_table('users')

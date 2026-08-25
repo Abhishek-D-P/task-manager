@@ -7,6 +7,7 @@ import sys
 from werkzeug.security import generate_password_hash,check_password_hash
 import secrets
 import time
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -19,12 +20,13 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-conn = sqlite3.connect('tasks.db',check_same_thread=False)
+BASE_DIR = Path(__file__).resolve().parent
+conn = sqlite3.connect(BASE_DIR / 'tasks.db', check_same_thread=False)
 cursor = conn.cursor()
 
 SESSION_DURATION_MINUTES = float(os.environ.get('SESSION_DURATION_MINUTES','1'))
 
-with open('query.json') as f:
+with open(BASE_DIR / 'query.json') as f:
     queries = json.load(f)
 
 conn.execute("PRAGMA foreign_keys = ON")
@@ -34,6 +36,10 @@ cursor.execute(queries.get("create_tasks_table"))
 sessions = {}
 
 def get_current_user_id():
+    '''
+        Returns user and role from session id
+    '''
+
     session_id = request.cookies.get('session_id',None)
     if session_id:
         session = sessions.get(session_id)
@@ -41,7 +47,8 @@ def get_current_user_id():
             session_expiry = session.get('expires_at')
             if time.time() <= session_expiry:
                 user = session.get('user_id')
-                return 'valid',user        
+                role = session.get('role')
+                return 'valid',user,role      
             else:
                 logging.warning("Session expired. Removing session.")
                 sessions.pop(session_id)
@@ -49,7 +56,7 @@ def get_current_user_id():
             logging.warning("Session ID not found in sessions dictionary.")
     else:
         logging.warning("No session ID found in cookies.")
-    return "expired",None
+    return "expired",None, None
             
 
 @app.route('/')
@@ -95,7 +102,7 @@ def login():
             session_id = secrets.token_hex(32)
             session_expires_at = time.time() + SESSION_DURATION_MINUTES * 60
             logging.debug(f"Session created for user_id {user[0]} with session_id {session_id} expiring in {SESSION_DURATION_MINUTES} minutes.")
-            sessions[session_id] = {'user_id':user[0],'expires_at':session_expires_at}
+            sessions[session_id] = {'user_id':user[0],'role':user[4],'expires_at':session_expires_at}
         except ValueError:
             logging.error("Wrong username or password")
             return jsonify({
@@ -115,7 +122,10 @@ def login():
 @app.route('/logout',methods = ['GET'])
 def logout():
     session_id = request.cookies.get('session_id')
-    sessions.pop(session_id)
+    try:
+        sessions.pop(session_id)
+    except:
+        pass
     response = redirect('/')
     response.delete_cookie('session_id')
     return response
@@ -123,7 +133,8 @@ def logout():
 
 @app.route('/tasks',methods = ['GET',"POST"])
 def tasks():
-    session_status , user_id = get_current_user_id()
+    session_status , user_id, role = get_current_user_id()
+    print(role)
     if session_status == 'expired' or user_id is None:
         response = redirect('/')
         response.delete_cookie('session_id')
@@ -131,13 +142,17 @@ def tasks():
     if request.method == 'GET':
         query = queries.get("get_tasks")
         try:
-            cursor.execute(query,(user_id,))
+            if role == 'admin':
+                cursor.execute('SELECT * FROM TASKS')
+            else:
+                cursor.execute(query,(user_id,))
         except Exception as e:
             logging.error(f"Query failed due to {e}")
             raise
         all_tasks = cursor.fetchall()
+        print(all_tasks)
         logging.info("Get query successful")
-        return render_template('task.html',title="Tasks Page", tasks=all_tasks)
+        return render_template('task.html',title="Tasks Page", tasks=all_tasks, role=role)
     elif request.method == 'POST':
         task = request.form.get("task")
         status = request.form.get("status")
@@ -153,16 +168,22 @@ def tasks():
 
 @app.route("/tasks/<int:id>",methods = ['PATCH','DELETE'])
 def task_item(id):
-    session_status , user_id = get_current_user_id()
+    session_status , user_id, role = get_current_user_id()
     if session_status == 'expired' or user_id is None:
         return redirect('/')
     if request.method == 'PATCH':
         response = request.get_json()
         task = response.get("task")
         status = response.get("status")
-        query = queries.get("update_task")
+        if role == "admin":
+            query = queries.get("update_task_admin")
+        else:
+            query = queries.get("update_task")
         try:
-            cursor.execute(query,(task,status,id,user_id))
+            if role == 'admin':
+                cursor.execute(query,(task,status,id))
+            else:
+                cursor.execute(query,(task,status,id,user_id))
             conn.commit()
         except Exception as e:
             logging.error(f"Query Failed due to {e}")
@@ -171,9 +192,16 @@ def task_item(id):
         return {"success":True},200
     
     elif request.method == 'DELETE':
-        query = queries.get("delete_task")
+        if role == "admin":
+            query = queries.get("delete_task_admin")
+        else:
+            query = queries.get("delete_task")
+        
         try:
-            cursor.execute(query,(id,user_id))
+            if role == 'admin':
+                cursor.execute(query,(id,))
+            else:
+                cursor.execute(query,(id,user_id))
             conn.commit()
             logging.info("Delete successful!")
         except Exception as e:
