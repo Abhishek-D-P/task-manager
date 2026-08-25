@@ -1,0 +1,47 @@
+diff --git a/query.json b/query.json
+index b90b1bd..b6d4226 100644
+--- a/query.json
++++ b/query.json
+@@ -2,7 +2,6 @@
+     "create_users_table": "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username VARCHAR(50) UNIQUE NOT NULL,name VARCHAR(50) NOT NULL,password_hash VARCHAR(255) NOT NULL);",
+     "create_tasks_table": "CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,task VARCHAR(50) NOT NULL,status VARCHAR(50),user_id INTEGER,FOREIGN KEY (user_id) REFERENCES users(id));",
+     "create_users": "INSERT INTO USERS (username,name,password_hash) VALUES (?,?,?);",
+-    "create_super_users": "INSERT INTO USERS (username,name,password_hash,role) VALUES (?,?,?,?);",
+     "get_user": "SELECT * FROM USERS WHERE USERNAME = ?;",
+     "get_tasks": "SELECT * FROM TASKS WHERE user_id = ?;",
+     "create_task": "INSERT INTO TASKS (task,status,user_id) VALUES (?,?,?);",
+diff --git a/super_user.py b/super_user.py
+deleted file mode 100644
+index 36dd417..0000000
+--- a/super_user.py
++++ /dev/null
+@@ -1,25 +0,0 @@
+-import argparse
+-import json
+-from werkzeug.security import generate_password_hash
+-import sqlite3
+-
+-conn = sqlite3.connect('tasks.db',check_same_thread=False)
+-cursor = conn.cursor()
+-
+-with open('query.json','r') as f:
+-    queries = json.load(f)
+-parser = argparse.ArgumentParser(description='Create super user')
+-parser.add_argument('--username',default='admin')
+-parser.add_argument('--name',required=True)
+-parser.add_argument('--password',default='admin')
+-args = parser.parse_args()
+-
+-username = args.username
+-name = args.name
+-password = args.password
+-password_hash = generate_password_hash(password)
+-role = 'admin'
+-cursor.execute(queries.get('create_super_users'),(username,name,password_hash,role))
+-conn.commit()
+-
+-print(f"Create super user with username: {username} and password: {password}")
+\ No newline at end of file
+diff --git a/tasks.db b/tasks.db
+index 5299357..da51edb 100644
+Binary files a/tasks.db and b/tasks.db differ
